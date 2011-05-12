@@ -34,9 +34,9 @@ def createbarcode(number, nick):
 def create_db(dbdir):
         conn = sqlite3.connect(dbdir)
         db = conn.cursor()
-        db.execute('''create table users(nick text, ownerid unique)''')
-        db.execute('''create teble box(name text, info text, ownerid text, boxid  unique)''') 
-        db.execute('''create table items(name text, info text, boxid int, itemid unique)''')
+        db.execute('''create table users(nick text, ownerid int unique)''')
+        db.execute('''create teble box(name text, info text, ownerid int, boxid  int unique)''') 
+        db.execute('''create table items(name text, info text, boxid int, itemid int unique)''')
         conn.commit()
         db.close()
 
@@ -57,13 +57,14 @@ def adduser(nick):
     return tupel
 
 ## function to add box
-#def addbox(ownerid)
-#    conn = sqlite3.connect(dbdir)
-#    db = conn.cursor()
-#    db.execute('select nick from users where ownerid="' + ownerid + '"')
-#    for i in db
-#         nick = i[0]
-#    db.execute('insert into box values( )'    #####################################################
+def addbox(ownerid)
+    conn = sqlite3.connect(dbdir)
+    db = conn.cursor()
+    db.execute('select nick from users where ownerid="' + ownerid + '"')
+    for i in db
+         nick = i[0]
+    tupel = [ownerid, randxdig(13)
+    db.execute('insert into box(ownerid, boxid) values(?, ?)', tupel)
 
 ## function to list all users in database
 
