@@ -34,29 +34,41 @@ def createbarcode(number, nick):
 def create_db(dbdir):
         conn = sqlite3.connect(dbdir)
         db = conn.cursor()
-        db.execute('''create table users(nick text, id int)''')
+        db.execute('''create table users(nick text, ownerid unique)''')
+        db.execute('''create teble box(name text, info text, ownerid text, boxid  unique)''') 
+        db.execute('''create table items(name text, info text, boxid int, itemid unique)''')
         conn.commit()
         db.close()
 
 ## function to add user
+## todo repeat randxdigit generation when id alredy exists!
 
 def adduser(nick):
-    conn = sqlite3.connect("./lager_db")
+    conn = sqlite3.connect(dbdir)
     db = conn.cursor()
     db.execute('select * from users where nick="' + nick + '"')
     for i in db:
         if len(i) != 0:
             return -1
-    tupel = [nick, randxdig(8)]
+    tupel = [nick, randxdig(13)]
     db.execute('insert into users values(?, ?)', tupel)
     conn.commit()
     db.close()
     return tupel
 
+## function to add box
+#def addbox(ownerid)
+#    conn = sqlite3.connect(dbdir)
+#    db = conn.cursor()
+#    db.execute('select nick from users where ownerid="' + ownerid + '"')
+#    for i in db
+#         nick = i[0]
+#    db.execute('insert into box values( )'    #####################################################
+
 ## function to list all users in database
 
 def showusers():
-    conn = sqlite3.connect("./lager_db")
+    conn = sqlite3.connect(dbdir)
     db = conn.cursor()
     db.execute('select * from users')
     for users in db:
