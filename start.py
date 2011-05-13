@@ -2,17 +2,29 @@
 import sys, os, time, subprocess, random, sqlite3
 dbdir   = "./lager_db"
 drucker = "shack"
-
 ## returns random in with 8 digits
-def randxdig(x):
-    dig = ""
-    for i in range(x):
+
+def quersum(x):
+    y = 0
+    for i in str(x):
+        y += int(i)
+    if y > 9:
+        y = quersum(y)
+    return y
+
+def randxdig(x, y):
+    dig = str(y)
+    
+    for i in range(int(x) - 2):
         dig += str(random.randint(1,9))
+    dig += str(quersum(dig))
     return dig;
+    
+
 
 ## print function
-
 def hardcopy(txt, drucker):
+
     txt = "echo -e '" + txt + "' |lpr -P " + drucker
     #hardcopy = subprocess.popen(txt)
     print(txt)
@@ -20,13 +32,18 @@ def hardcopy(txt, drucker):
 ## creates and shows a barcode!
 
 def createbarcode(number, nick):
+    print("generating barcode")
     zint = subprocess.os.popen("zint -d " + str(number) + " -o o")
+    zint.close()
+    print("adding nickname to barcode")
     img = subprocess.os.popen("convert out.png -gravity East -background White -splice 300x0 -pointsize 50  -annotate +10+0 '" + nick + "' out.png")
     img.close()
+    print("adding date to barcode")
     img = subprocess.os.popen("convert out.png   -background black -fill white  label:'" + time.asctime() + "' +swap  -gravity Center -append " + nick + "_" + number + ".png")
     img.close()
+    print("viewing barcode")
     qiv = subprocess.os.popen("qiv " + nick + "_" + number + ".png")
-    time.sleep(3)
+    time.sleep(10)
     qiv = subprocess.os.popen("killall qiv")
 
 
@@ -34,14 +51,15 @@ def createbarcode(number, nick):
 def create_db(dbdir):
         conn = sqlite3.connect(dbdir)
         db = conn.cursor()
-        db.execute('''create table users(nick text, ownerid int unique)''')
-        db.execute('''create teble box(name text, info text, ownerid int, boxid  int unique)''') 
-        db.execute('''create table items(name text, info text, boxid int, itemid int unique)''')
+        db.execute('''create table users(nick text, ownerid unique)''')
+        conn.commit()
+        db.execute('''create table box(name text, info text, ownerid int, boxid unique)''') 
+        conn.commit()
+        db.execute('''create table items(name text, info text, boxid int, itemid unique)''')
         conn.commit()
         db.close()
 
 ## function to add user
-## todo repeat randxdigit generation when id alredy exists!
 
 def adduser(nick):
     conn = sqlite3.connect(dbdir)
@@ -50,21 +68,26 @@ def adduser(nick):
     for i in db:
         if len(i) != 0:
             return -1
-    tupel = [nick, randxdig(13)]
+    tupel = [nick, randxdig(13, 1)]
     db.execute('insert into users values(?, ?)', tupel)
     conn.commit()
     db.close()
     return tupel
 
 ## function to add box
-def addbox(ownerid)
+def addbox(ownerid):
     conn = sqlite3.connect(dbdir)
     db = conn.cursor()
     db.execute('select nick from users where ownerid="' + ownerid + '"')
-    for i in db
+    conn.commit()
+    for i in db:
          nick = i[0]
-    tupel = [ownerid, randxdig(13)
+    tupel = [ownerid, randxdig(13, 2)]
     db.execute('insert into box(ownerid, boxid) values(?, ?)', tupel)
+    conn.commit()
+    db.close()
+    tupel = [tupel[1], str(nick)]
+    return tupel
 
 ## function to list all users in database
 
@@ -80,8 +103,10 @@ def showusers():
 ## program start!
 try:
     create_db(dbdir)
+    print(dbdir + " not found! creating..\n\n\n")
 except:
-    pass
+    print(dbdir + " found! using it.. \n\n\n")
+
 while True:
     print("input 0 to show print all users in db")
     print("input 1 to add a new user")
@@ -92,11 +117,24 @@ while True:
 
     elif shell == "1":
         user = raw_input("username: ")
-        idcode = adduser(user)
-        if idcode == -1:
-            print("user exitsts!\n")
+        if len(user) < 8:
+            idcode = adduser(user)
+            if idcode == -1:
+                print("user exitsts!\n")
+            else:
+                createbarcode(idcode[1], user)    
+                hardcopy("user and barcode would get printed now","")
+                print("\n")
         else:
-            createbarcode(idcode[1], user)    
-            hardcopy("user and barcode would get printed now","")
-            print("\n")
-    
+            print("max length = 7\n")
+    elif len(shell) == 13:
+        # quersummen check
+        if  int(quersum(shell[:12])) == int(shell[12]):
+            if int(shell[0]) == 1:
+                box = addbox(shell)
+                print(box)
+                createbarcode(box[0], "box." + box[1])
+                #hardcopy(box)
+                print("\n")
+        else: 
+            print("invalid number!")
