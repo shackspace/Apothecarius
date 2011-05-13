@@ -1,7 +1,10 @@
 #!/usr/bin/python2
-import sys, os, time, subprocess, random, sqlite3
-dbdir   = "./lager_db"
+import sys, os, time, subprocess, random, MySQLdb
 drucker = "shack"
+dbhost = "miefda.de" 
+dbuser = "lager"
+dbpasswort = "884001"
+dbase = "testdb"
 ## returns random in with 8 digits
 
 def quersum(x):
@@ -48,51 +51,56 @@ def createbarcode(number, nick):
 
 
 ## function to create inital dv
-def create_db(dbdir):
-        conn = sqlite3.connect(dbdir)
-        db = conn.cursor()
-        db.execute('''create table users(nick text, ownerid unique)''')
-        conn.commit()
-        db.execute('''create table box(name text, info text, ownerid int, boxid unique)''') 
-        conn.commit()
-        db.execute('''create table items(name text, info text, boxid int, itemid unique)''')
-        conn.commit()
-        db.close()
+def create_db():
+    conn = MySQLdb.connect(dbhost, dbuser, dbpasswort, dbase)
+    db = conn.cursor()
+    sql = '''create table users(nick text, ownerid unique)'''
+    db.execute(sql)
+    conn.commit()
+    sql = '''create table box(name text, info text, ownerid int, boxid unique)'''
+    db.execute(sql) 
+    conn.commit()
+    sql = '''create table items(name text, info text, boxid int, itemid unique)'''
+    db.execute(sql)
+    conn.commit()
+    db.close()
 
 ## function to add user
 
 def adduser(nick):
-    conn = sqlite3.connect(dbdir)
+    conn = MySQLdb.connect(dbhost, dbuser, dbpasswort, dbase)
     db = conn.cursor()
-    db.execute('select * from users where nick="' + nick + '"')
+    sql = 'select * from users where nick="' + nick + '"'
+    db.execute(sql)
     for i in db:
         if len(i) != 0:
             return -1
-    tupel = [nick, randxdig(13, 1)]
-    db.execute('insert into users values(?, ?)', tupel)
+    sql = 'insert into users value(' + nick + ',' + randxdig(13, 1)
+    db.execute(sql)
     conn.commit()
     db.close()
     return tupel
 
 ## function to add box
 def addbox(ownerid):
-    conn = sqlite3.connect(dbdir)
+    conn = MySQLd.connect(dbhost, dbuser, dbpasswort, dbase)
     db = conn.cursor()
-    db.execute('select nick from users where ownerid="' + ownerid + '"')
+    sql = 'select nick from users where ownerid="' + ownerid + '"'
+    db.execute(sql)
     conn.commit()
     for i in db:
          nick = i[0]
-    tupel = [ownerid, randxdig(13, 2)]
-    db.execute('insert into box(ownerid, boxid) values(?, ?)', tupel)
+    sql = 'insert into box(ownerid, boxid) values('+ ownerid + ',' + randxdig(13,2) +' )'
+    db.execute(sql)
     conn.commit()
     db.close()
-    tupel = [tupel[1], str(nick)]
+    tupel = [randxdig(13, 2), str(nick)]
     return tupel
 
 ## function to list all users in database
 
 def showusers():
-    conn = sqlite3.connect(dbdir)
+    conn = MySQLdb.connect(dbhost, dbuser, dbpasswort, dbase)
     db = conn.cursor()
     db.execute('select * from users')
     for users in db:
@@ -102,10 +110,9 @@ def showusers():
 
 ## program start!
 try:
-    create_db(dbdir)
-    print(dbdir + " not found! creating..\n\n\n")
+    print(" not found! creating..\n\n\n")
 except:
-    print(dbdir + " found! using it.. \n\n\n")
+    print(" found! using it.. \n\n\n")
 
 while True:
     print("input 0 to show print all users in db")
