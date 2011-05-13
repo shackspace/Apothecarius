@@ -1,10 +1,11 @@
 #!/usr/bin/python2
 import sys, os, time, subprocess, random, MySQLdb
 drucker = ""
-dbhost = "" 
-dbuser = ""
-dbpasswort = ""
+dbhost = "miefda.de" 
+dbuser = "lager"
+dbpasswort = "884001"
 dbase = "testdb"
+
 ## returns random in with 8 digits
 
 def quersum(x):
@@ -54,13 +55,13 @@ def createbarcode(number, nick):
 def create_db():
     conn = MySQLdb.connect(dbhost, dbuser, dbpasswort, dbase)
     db = conn.cursor()
-    sql = '''create table users(nick text, ownerid unique)'''
+    sql = '''create table users(nick text, ownerid double, UNIQUE(ownerid))'''
     db.execute(sql)
     conn.commit()
-    sql = '''create table box(name text, info text, ownerid int, boxid unique)'''
+    sql = '''create table box(name text, info text, ownerid double, boxid double, UNIQUE(boxid))'''
     db.execute(sql) 
     conn.commit()
-    sql = '''create table items(name text, info text, boxid int, itemid unique)'''
+    sql = '''create table items(name text, info text, boxid double, itemid double, UNIQUE(itemid))'''
     db.execute(sql)
     conn.commit()
     db.close()
@@ -68,22 +69,24 @@ def create_db():
 ## function to add user
 
 def adduser(nick):
+    global durcker, dbhost, dbuser, dbpasswort, dbase
     conn = MySQLdb.connect(dbhost, dbuser, dbpasswort, dbase)
     db = conn.cursor()
-    sql = 'select * from users where nick="' + nick + '"'
+    sql = "select * from users where nick='" + nick + "'"
     db.execute(sql)
     for i in db:
         if len(i) != 0:
             return -1
-    sql = 'insert into users value(' + nick + ',' + randxdig(13, 1)
-    db.execute(sql)
+    tupel = [nick, randxdig(13, 1)]
+    db.execute("INSERT INTO users VALUES ('" + tupel[0] + "'," + tupel[1] + ")")
     conn.commit()
     db.close()
     return tupel
 
 ## function to add box
 def addbox(ownerid):
-    conn = MySQLd.connect(dbhost, dbuser, dbpasswort, dbase)
+    global durcker, dbhost, dbuser, dbpasswort, dbase
+    conn = MySQLdb.connect(dbhost, dbuser, dbpasswort, dbase)
     db = conn.cursor()
     sql = 'select nick from users where ownerid="' + ownerid + '"'
     db.execute(sql)
@@ -100,6 +103,7 @@ def addbox(ownerid):
 ## function to list all users in database
 
 def showusers():
+    global durcker, dbhost, dbuser, dbpasswort, dbase
     conn = MySQLdb.connect(dbhost, dbuser, dbpasswort, dbase)
     db = conn.cursor()
     db.execute('select * from users')
@@ -110,7 +114,7 @@ def showusers():
 
 ## program start!
 try:
-    print(" not found! creating..\n\n\n")
+    create_db()
 except:
     print(" found! using it.. \n\n\n")
 
