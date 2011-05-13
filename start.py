@@ -1,9 +1,9 @@
 #!/usr/bin/python2
 import sys, os, time, subprocess, random, MySQLdb
-drucker = "shack"
-dbhost = "miefda.de" 
-dbuser = "lager"
-dbpasswort = "884001"
+drucker = ""
+dbhost = "" 
+dbuser = ""
+dbpasswort = ""
 dbase = "testdb"
 ## returns random in with 8 digits
 
