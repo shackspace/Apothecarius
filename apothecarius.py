@@ -1,4 +1,10 @@
 #!/usr/bin/python2
+
+#######################################
+## Apothecarius v0a1
+##  under construction! by miefda
+##  miefda@miefda.de
+#######################################
 import sys, os, time, subprocess, random, MySQLdb
 drucker = ""
 dbhost = "miefda.de" 
@@ -6,8 +12,7 @@ dbuser = "lager"
 dbpasswort = "884001"
 dbase = "testdb"
 
-## returns random in with 8 digits
-
+## creats a checksum
 def quersum(x):
     y = 0
     for i in str(x):
@@ -16,6 +21,7 @@ def quersum(x):
         y = quersum(y)
     return y
 
+## returns random in with 8 digits
 def randxdig(x, y):
     dig = str(y)
     
@@ -85,7 +91,10 @@ def adduser(nick):
 
 ## function to add box
 def addbox(ownerid, boxname):
-    global durcker, dbhost, dbuser, dbpasswort, dbase
+    
+    if len(boxname) == 0:
+        boxname = time.asctime()
+    
     conn = MySQLdb.connect(dbhost, dbuser, dbpasswort, dbase)
     db = conn.cursor()
     sql = 'select nick from users where ownerid="' + ownerid + '"'
@@ -93,17 +102,38 @@ def addbox(ownerid, boxname):
     conn.commit()
     for i in db:
          nick = i[0]
-    sql = 'insert into box(name, ownerid, boxid) values("' + boxname + '",'+ ownerid + ',' + randxdig(13,2) +' )'
+    tupel = [randxdig(13, 2), str(nick), boxname]
+    sql = 'insert into box(name, ownerid, boxid) values("' + boxname + '",'+ ownerid + ',' + tupel[0] +' )'
     db.execute(sql)
     conn.commit()
     db.close()
-    tupel = [randxdig(13, 2), str(nick)]
     return tupel
 
-## function to list all users in database
+def additem(boxid, itemname):
+    
+    if len(itemname) == 0:
+       itemname = time.asctime()
+     
+    conn = MySQLdb.connect(dbhost, dbuser, dbpasswort, dbase)
+    db = conn.cursor()
+    sql = 'select name from box where boxid="' + boxid + '"'
+    db.execute(sql)
+    conn.commit()
+    for i in db:
+         name = i[0]
+    tupel = [randxdig(13, 3), str(name), itemname]
+    sql = 'insert into items(name, boxid, itemid) values("' + itemname + '",'+ boxid + ',' + tupel[0] +' )'
+    db.execute(sql)
+    conn.commit()
+    db.close()
+    return tupel
+
+
+
+
+
 
 def showusers():
-    global durcker, dbhost, dbuser, dbpasswort, dbase
     conn = MySQLdb.connect(dbhost, dbuser, dbpasswort, dbase)
     db = conn.cursor()
     db.execute('select nick, ownerid from users')
@@ -140,15 +170,20 @@ while True:
     elif len(shell) == 13:
         # quersummen check
         if  int(quersum(shell[:12])) == int(shell[12]):
+            ## if ownerd is entered, box aadding get initiated xD
             if int(shell[0]) == 1:
                 boxname = raw_input("Please enter Boxname:")
                 box = addbox(shell, boxname)
                 print(box)
-                if len(boxname) != 0:
-                    createbarcode(box[0], box[1] + "_" + boxname)
-                else:
-                    createbarcode(box[0], box[1] + "_" + time.asctime())
+                createbarcode(box[0], box[1] + "_" + box[2])
                 #hardcopy(box)
+
+            if int(shell[0]) == 2:
+                itemname = raw_input("Please enter Itemname:")
+                item = additem(shell, itemname)
+                print(item)
+                createbarcode(item[0], item[0] + "_" + item[2])
+
 
                 print("\n")
         else: 
