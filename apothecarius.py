@@ -40,13 +40,14 @@ def createbarcode(number, nick):
     zint = subprocess.os.popen("zint -d " + str(number) + " -o o")
     zint.close()
     print("adding nickname to barcode")
-    img = subprocess.os.popen("convert out.png -gravity East -background White -splice 300x0 -pointsize 50  -annotate +10+0 '" + nick + "' out.png")
+    #img = subprocess.os.popen("convert out.png -gravity East -background White -splice 300x0 -pointsize 25  -annotate +10+0 '" + nick + "' out.png")
+    img = subprocess.os.popen("convert out.png   -background white -fill black -pointsize 20  label:'" + nick  + "'  -gravity Center -append out.png")
     img.close()
     print("adding date to barcode")
-    img = subprocess.os.popen("convert out.png   -background black -fill white  label:'" + time.asctime() + "' +swap  -gravity Center -append " + nick + "_" + number + ".png")
+    img = subprocess.os.popen("convert out.png   -background black -fill white  label:'" + time.asctime() + "' +swap  -gravity Center -append out.png")
     img.close()
     print("viewing barcode")
-    qiv = subprocess.os.popen("qiv " + nick + "_" + number + ".png")
+    qiv = subprocess.os.popen("qiv out.png")
     time.sleep(10)
     qiv = subprocess.os.popen("killall qiv")
 
@@ -55,7 +56,7 @@ def createbarcode(number, nick):
 def create_db():
     conn = MySQLdb.connect(dbhost, dbuser, dbpasswort, dbase)
     db = conn.cursor()
-    sql = '''create table users(nick text, ownerid double, UNIQUE(ownerid))'''
+    sql = '''create table users(nick text, ownerid double, password text,  unique(Ownerid))'''
     db.execute(sql)
     conn.commit()
     sql = '''create table box(name text, info text, ownerid double, boxid double, UNIQUE(boxid))'''
@@ -69,7 +70,6 @@ def create_db():
 ## function to add user
 
 def adduser(nick):
-    global durcker, dbhost, dbuser, dbpasswort, dbase
     conn = MySQLdb.connect(dbhost, dbuser, dbpasswort, dbase)
     db = conn.cursor()
     sql = "select * from users where nick='" + nick + "'"
@@ -78,13 +78,13 @@ def adduser(nick):
         if len(i) != 0:
             return -1
     tupel = [nick, randxdig(13, 1)]
-    db.execute("INSERT INTO users VALUES ('" + tupel[0] + "'," + tupel[1] + ")")
+    db.execute("INSERT INTO users(nick, ownerid) VALUES ('" + tupel[0] + "'," + tupel[1] + ")")
     conn.commit()
     db.close()
     return tupel
 
 ## function to add box
-def addbox(ownerid):
+def addbox(ownerid, boxname):
     global durcker, dbhost, dbuser, dbpasswort, dbase
     conn = MySQLdb.connect(dbhost, dbuser, dbpasswort, dbase)
     db = conn.cursor()
@@ -93,7 +93,7 @@ def addbox(ownerid):
     conn.commit()
     for i in db:
          nick = i[0]
-    sql = 'insert into box(ownerid, boxid) values('+ ownerid + ',' + randxdig(13,2) +' )'
+    sql = 'insert into box(name, ownerid, boxid) values("' + boxname + '",'+ ownerid + ',' + randxdig(13,2) +' )'
     db.execute(sql)
     conn.commit()
     db.close()
@@ -106,10 +106,9 @@ def showusers():
     global durcker, dbhost, dbuser, dbpasswort, dbase
     conn = MySQLdb.connect(dbhost, dbuser, dbpasswort, dbase)
     db = conn.cursor()
-    db.execute('select * from users')
+    db.execute('select nick, ownerid from users')
     for users in db:
-        for i in range(len(users)):
-            print(users[i])
+        print(users[0] + " " + str(int(users[1])))
     db.close()
 
 ## program start!
@@ -128,7 +127,7 @@ while True:
 
     elif shell == "1":
         user = raw_input("username: ")
-        if len(user) < 8:
+        if len(user) < 11:
             idcode = adduser(user)
             if idcode == -1:
                 print("user exitsts!\n")
@@ -137,15 +136,20 @@ while True:
                 hardcopy("user and barcode would get printed now","")
                 print("\n")
         else:
-            print("max length = 7\n")
+            print("max length = 10\n")
     elif len(shell) == 13:
         # quersummen check
         if  int(quersum(shell[:12])) == int(shell[12]):
             if int(shell[0]) == 1:
-                box = addbox(shell)
+                boxname = raw_input("Please enter Boxname:")
+                box = addbox(shell, boxname)
                 print(box)
-                createbarcode(box[0], "box." + box[1])
+                if len(boxname) != 0:
+                    createbarcode(box[0], box[1] + "_" + boxname)
+                else:
+                    createbarcode(box[0], box[1] + "_" + time.asctime())
                 #hardcopy(box)
+
                 print("\n")
         else: 
             print("invalid number!")
