@@ -1,0 +1,7 @@
+Requirements:
+    - zint (barcode generator) http://sourceforge.net/projects/zint/
+    - image magick (to add timestamp & labels to the barcode)
+    - qiv (for viewing the generated image) -will be removed later 
+    - python2
+    - MySQL database  (a test database account iss included in actual version)
+    
