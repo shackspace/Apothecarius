@@ -1,3 +1,5 @@
+migrated to new location: https://codeberg.org/shackspace/Apothecarius
+
 Requirements:
     - zint (barcode generator) http://sourceforge.net/projects/zint/
     - image magick (to add timestamp & labels to the barcode)
